@@ -94,6 +94,76 @@ public class Eng_software_urna_eletronica {
     			Database.removeUser(id);
         		break;
     		case 3:
+    			System.out.println("------------ EDIÇÃO ------------");
+    			System.out.println("Informe o id do usuário a ser editado: ");
+    			Integer eId = sc.nextInt();
+    			
+    			User foundUser = Database.getUser(eId);
+    			if(foundUser != null) {
+    				int eChoice = -1;
+    				
+    				String eNome = foundUser.getNome();
+    				String ePartido = foundUser.getPartido();
+    				String eCargo = foundUser.getCargo();
+        			do {
+        				System.out.println("Informe o que deseja editar: ");
+        				System.out.println("1. Nome");
+        				System.out.println("2. Partido");
+        				System.out.println("3. Cargo");
+        				System.out.println("4. Finalizar");
+        				eChoice = sc.nextInt();
+        				switch(eChoice) {
+        				case 1: 
+        					System.out.println("Informe o novo nome do usuário: ");
+        					eNome = sc.nextLine();
+        					break;
+        				case 2:
+        					if(ePartido == null) {
+        						System.out.println("Informe o partido do usuário: ");
+        						ePartido = sc.nextLine();
+        						
+        						Boolean validChoice = false;
+        						do {
+        			    	        System.out.println("Informe o cargo da pessoa: ");        			    	        
+        			    	        System.out.println("1. SENADOR");
+        			    	        System.out.println("2. DEPUTADO");
+        			    	        System.out.println("3. GOVERNADOR");
+        			    	        System.out.println("4. PRESIDENTE");
+        			    	        int cargoChoice = sc.nextInt();
+        			    	        
+        			    	        switch(cargoChoice) {
+        			    	        case 1:
+        			    	        	eCargo = "SENADOR";
+        			    	        	validChoice = true;
+        			    	        	break;
+        			    	        case 2:
+        			    	        	eCargo = "DEPUTADO";
+        			    	        	validChoice = true;
+        			    	        	break;
+			    	        		case 3:
+        			    	        	eCargo = "GOVERNADOR";
+        			    	        	validChoice = true;
+        			    	        	break;
+									case 4:
+										eCargo = "PRESIDENTE";
+										validChoice = true;
+										break;
+        			    	        }
+        						}while(!validChoice);
+        						
+        						System.out.println("Informe o partido do usuário: ");
+        						ePartido = sc.nextLine();
+        					}
+        					break;
+        				case 3:
+        					
+        					break;
+        				default:
+        					break;
+        				}
+        				
+        			}while(eChoice != 4);
+    			}
     			
         		break;
     		case 4:
