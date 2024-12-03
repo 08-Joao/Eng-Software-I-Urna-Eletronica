@@ -26,8 +26,8 @@ public class Voting {
 		for(User candidato : entradas) {
 			candidato.toString();
 		}
-		
-		System.out.println("-------- ELEGIDOS --------");
+	
+		System.out.println("\n------------------ ELEGIDOS ------------------");
 		List<User> elegidos = Database.getElected(votingTable);
 		
 		for(User elegido : elegidos) {

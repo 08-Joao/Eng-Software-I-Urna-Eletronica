@@ -36,6 +36,17 @@ public class User {
         this(id, nome, null, cargo); 
     }
 
+    public User printUser(int id){
+        User user = Database.getUser(id);
+        if(user != null){
+            user.getId();
+            user.getNome();
+            user.getPartido();
+            user.getCargo();
+        }
+        return user;
+    }
+
     // Getters e Setters
     public Integer getId() {
         return id;
