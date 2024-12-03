@@ -31,7 +31,9 @@ public class Voting {
 		List<User> elegidos = Database.getElected(votingTable);
 		
 		for(User elegido : elegidos) {
-			System.out.println(elegido.toString());
+			if(elegido.getCargo().compareToIgnoreCase("CIVIL") == 0) {				
+				System.out.println(elegido.toString());
+			}
 		}
 	}
 
