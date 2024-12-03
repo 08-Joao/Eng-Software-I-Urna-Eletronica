@@ -157,6 +157,7 @@ public class Database {
     }
 
     
+    
     public static void insertUser(User pessoa) {
         String insertSQL = """
                 INSERT INTO users (nome, partido, cargo) VALUES (?, ?, ?);
@@ -201,6 +202,54 @@ public class Database {
         }
     }
 
+    public static User getUser(Integer id) {
+        String selectSQL = """
+                SELECT * FROM users WHERE id = ?;
+            """;
+
+        try (Connection con = getConnection();
+             PreparedStatement pstmt = con.prepareStatement(selectSQL)) {
+
+            pstmt.setInt(1, id);
+            ResultSet rs = pstmt.executeQuery();
+
+            if (rs.next()) {
+                User pessoa = new User(rs.getInt("id"),rs.getString("nome"),rs.getString("partido"),rs.getString("cargo"));                
+                return pessoa;
+            } else {
+                System.out.printf("Nenhum usuário encontrado com o ID %d.%n", id);
+            }
+        } catch (SQLException e) {
+            System.err.println("Erro ao buscar o usuário no banco de dados: " + e.getMessage());
+        }
+        return null;
+    }
+
+    
+    public static void editUser(User pessoa) {
+        String updateSQL = """
+                UPDATE users SET nome = ?, partido = ?, cargo = ? WHERE id = ?;
+            """;
+
+        try (Connection con = getConnection();
+             PreparedStatement pstmt = con.prepareStatement(updateSQL)) {
+
+            pstmt.setString(1, pessoa.getNome());
+            pstmt.setString(2, pessoa.getPartido());
+            pstmt.setString(3, pessoa.getCargo());
+            pstmt.setInt(4, pessoa.getId());
+
+            int rowsAffected = pstmt.executeUpdate();
+            if (rowsAffected > 0) {
+                System.out.printf("Usuário com ID %d atualizado com sucesso! Linhas afetadas: %d%n", pessoa.getId(), rowsAffected);
+            } else {
+                System.out.printf("Nenhum usuário encontrado com o ID %d.%n", pessoa.getId());
+            }
+
+        } catch (SQLException e) {
+            System.err.println("Erro ao atualizar o usuário no banco de dados: " + e.getMessage());
+        }
+    }
 
     
 }

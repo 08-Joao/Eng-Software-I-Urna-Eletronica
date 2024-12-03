@@ -76,17 +76,22 @@ public class Eng_software_urna_eletronica {
     	            }
     	        }
 
+    	        User user = null;
     	        if (isVotavel) {
     	            System.out.println("Informe o partido do usuário");
     	            String partido = sc.nextLine();
-    	            User user = new User(0, nome, partido,Cargo);
+    	            user = new User(0, nome, partido,Cargo);
     	        } else {
-    	            User user = new User(0, nome, null, "CIVIL");
+    	            user = new User(0, nome, null, "CIVIL");
     	        }
+    	        Database.insertUser(user);
     			
     			break;
     		case 2:
-    			
+    			System.out.println("------------ REMOÇÃO ------------");
+    			System.out.println("Informe o ID do usuário a ser removido: ");
+    			Integer id = sc.nextInt();
+    			Database.removeUser(id);
         		break;
     		case 3:
     			
