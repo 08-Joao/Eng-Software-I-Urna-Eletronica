@@ -32,7 +32,8 @@ public class Eng_software_urna_eletronica {
     		System.out.println("3. Editar Pessoa");
     		System.out.println("4. Iniciar Votação");
     		System.out.println("5. Relatório de uma Votação");
-    		System.out.println("6. Sair");
+    		System.out.println("6. Popular Base de Dados");
+    		System.out.println("7. Sair");
     		System.out.println("----------------------------------------------");
     		c0 = sc.nextInt();
     		
@@ -40,6 +41,7 @@ public class Eng_software_urna_eletronica {
     		switch(c0) {
     		case 1:
     			System.out.println("------------ CADASTRO ------------");
+    			sc.nextLine();
     	        System.out.println("Informe o nome do usuário: ");
     	        String nome = sc.nextLine();
     	        
@@ -115,12 +117,15 @@ public class Eng_software_urna_eletronica {
         				eChoice = sc.nextInt();
         				switch(eChoice) {
         				case 1: 
+        					sc.nextLine();
         					System.out.println("Informe o novo nome do usuário: ");
         					eNome = sc.nextLine();
         					break;
         				case 2:
-        					if(ePartido == null) {
+        					if(ePartido == null || ePartido.trim().isEmpty()) {
+        						ePartido = null;
         						System.out.println("Informe o partido do usuário: ");
+        						sc.nextLine();
         						ePartido = sc.nextLine();
         						
         						Boolean validChoice = false;
@@ -152,7 +157,10 @@ public class Eng_software_urna_eletronica {
         			    	        }
         						}while(!validChoice);
         						
+
+        					}else {
         						System.out.println("Informe o partido do usuário: ");
+        						sc.nextLine();
         						ePartido = sc.nextLine();
         					}
         					break;
@@ -161,27 +169,33 @@ public class Eng_software_urna_eletronica {
         					Boolean validChoice2 = false;
         					
         					do {
-	        					System.out.println("Informe o cargo da pessoa: ");        			    	        
-				    	        System.out.println("1. SENADOR");
-				    	        System.out.println("2. DEPUTADO");
-				    	        System.out.println("3. GOVERNADOR");
-				    	        System.out.println("4. PRESIDENTE");
+	        					System.out.println("Informe o cargo da pessoa: ");    
+	        					System.out.println("1. CIVIL");
+				    	        System.out.println("2. SENADOR");
+				    	        System.out.println("3. DEPUTADO");
+				    	        System.out.println("4. GOVERNADOR");
+				    	        System.out.println("5. PRESIDENTE");
 				    	        int cargoChoice2 = sc.nextInt();
 				    	        
 				    	        switch(cargoChoice2) {
 				    	        case 1:
-				    	        	eCargo = "SENADOR";
+				    	        	eCargo = "CIVIL";
+				    	        	ePartido = null;
 				    	        	validChoice2 = true;
 				    	        	break;
 				    	        case 2:
+				    	        	eCargo = "SENADOR";
+				    	        	validChoice2 = true;
+				    	        	break;
+				    	        case 3:
 				    	        	eCargo = "DEPUTADO";
 				    	        	validChoice2 = true;
 				    	        	break;
-		    	        		case 3:
+		    	        		case 4:
 				    	        	eCargo = "GOVERNADOR";
 				    	        	validChoice2 = true;
 				    	        	break;
-								case 4:
+								case 5:
 									eCargo = "PRESIDENTE";
 									validChoice2 = true;
 									break;
@@ -199,88 +213,122 @@ public class Eng_software_urna_eletronica {
         				}
         				
         			}while(eChoice != 4);
+        			
+        			User editedUser = new User(eId,eNome,ePartido,eCargo);
+        			Database.editUser(editedUser);
     			}
     			
         		break;
     		case 4:
-    			int vChoice = sc.nextInt();
-    	        
-    			do {
-    				System.out.println("------------ VOTAÇÃO ------------");
-    				Voting.startVoting();
-    				System.out.println("Informe a opção desejada: ");        			    	        
-    				System.out.println("1. Votar");
-    				System.out.println("2. Finalizar");    	        
-    				
-    				System.out.println("Informe para qual cargo deseja votar: ");
-        	        System.out.println("1. Senador");
-        	        System.out.println("2. Deputado");
-        	        System.out.println("3. Governador");
-        	        System.out.println("4. Presidente");    	 
-    				int vcChoice = sc.nextInt();
-    				String vCargo = null;
-    				
-    				switch(vcChoice) {
-    				case 1:
-    					vCargo = "SENADOR";
-    					break;
-    				case 2:
-    					vCargo = "DEPUTADO";
-    					break;
-    				case 3:
-    					vCargo = "GOVERNADOR";
-    					break;
-    				case 4:
-    					vCargo = "PRESIDENTE";
-    					break;
-					default:
-						System.out.println("Cargo inválido.");
-						break;
-    				}
-        	        
-    				int currentPage = 1;
-    				Boolean voted = false;
-        	        if(vCargo != null){        	        
-        	        	do {
-            	        	System.out.println("Listando Candidatos do Cargo [" + vCargo + "]");
-            	        	List<User> candidatos = Database.listCandidates(vCargo, currentPage);
-            	        	
-            	        	for(User pessoa : candidatos) {
-            	        		pessoa.toString();
-            	        	}
-            	        	
-            	        	System.out.println("Página atual: " + currentPage);
-            	        	System.out.println("Informe o que deseja fazer: ");
-            	        	System.out.println("1. Página para direita(+1)");
-            	        	System.out.println("2. Página para esquerda(-1)");
-            	        	System.out.println("3. Votar");
-            	        	int fvChoice = sc.nextInt();
-            	        	
-            	        	
-            	        	switch(fvChoice) {
-            	        	case 1:
-            	        		currentPage += 1;
-            	        		break;
-            	        	case 2:
-            	        		currentPage = Math.max(1, currentPage - 1);
-            	        		break;
-            	        	case 3:
-            	        		System.out.println("Informe o id do candidato; ");
-            	        		Integer candidateId = sc.nextInt();
-            	        		
-            	        		Voting.makeVote(candidateId);
-            	        		voted = true;
-            	        		break;
-            	        	default:
-            	        		System.out.println("Entrada inválida");            	       
-            	        		break;
-            	        	}
-        	        	}while(!voted);
-        	        }
-        	        
-    			}while(vChoice == 1);
-    			
-        		break;
+    		    int vChoice;
+    		    Voting.startVoting(); 
+    		    do {
+    		        System.out.println("------------ VOTAÇÃO ------------");
+    		        System.out.println("Informe a opção desejada:");
+    		        System.out.println("1. Votar");
+    		        System.out.println("2. Finalizar");
+    		        
+    		        while (!sc.hasNextInt()) { // Prevenir erro com entradas inválidas
+    		            System.out.println("Entrada inválida. Informe 1 para votar ou 2 para finalizar.");
+    		            sc.next(); // Descarta entrada inválida
+    		        }
+    		        vChoice = sc.nextInt();
+
+    		        if (vChoice == 1) {
+    		            System.out.println("Informe para qual cargo deseja votar:");
+    		            System.out.println("1. Senador");
+    		            System.out.println("2. Deputado");
+    		            System.out.println("3. Governador");
+    		            System.out.println("4. Presidente");
+
+    		            int vcChoice = sc.nextInt();
+    		            String vCargo = null;
+
+    		            switch (vcChoice) {
+    		                case 1:
+    		                    vCargo = "SENADOR";
+    		                    break;
+    		                case 2:
+    		                    vCargo = "DEPUTADO";
+    		                    break;
+    		                case 3:
+    		                    vCargo = "GOVERNADOR";
+    		                    break;
+    		                case 4:
+    		                    vCargo = "PRESIDENTE";
+    		                    break;
+    		                default:
+    		                    System.out.println("Cargo inválido. Retornando ao menu principal.");
+    		                    continue; 
+    		            }
+
+    		            int currentPage = 1;
+    		            boolean voted = false;
+
+    		            if (vCargo != null) {
+    		                do {
+    		                    System.out.println("Listando candidatos do cargo [" + vCargo + "]");
+    		                    List<User> candidatos = Database.listCandidates(vCargo, (currentPage - 1) * 100); 
+
+    		                    if (candidatos.isEmpty()) {
+    		                        System.out.println("Nenhum candidato encontrado para o cargo selecionado.");
+    		                        break; 
+    		                    }
+
+    		                    for (User pessoa : candidatos) {
+    		                        System.out.println(pessoa.toString());
+    		                    }
+
+    		                    System.out.println("Página atual: " + currentPage);
+    		                    System.out.println("Informe o que deseja fazer:");
+    		                    System.out.println("1. Próxima página (+1)");
+    		                    System.out.println("2. Página anterior (-1)");
+    		                    System.out.println("3. Votar");
+    		                    System.out.println("4. Sair");
+
+    		                    int fvChoice;
+    		                    while (!sc.hasNextInt()) {
+    		                        System.out.println("Entrada inválida. Informe 1, 2, 3 ou 4.");
+    		                        sc.next(); 
+    		                    }
+    		                    fvChoice = sc.nextInt();
+
+    		                    switch (fvChoice) {
+    		                        case 1:
+    		                            currentPage++;
+    		                            break;
+    		                        case 2:
+    		                            currentPage = Math.max(1, currentPage - 1); 
+    		                            break;
+    		                        case 3:
+    		                            System.out.println("Informe o ID do candidato:");
+    		                            while (!sc.hasNextInt()) {
+    		                                System.out.println("Entrada inválida. Informe um número para o ID.");
+    		                                sc.next(); 
+    		                            }
+    		                            int candidateId = sc.nextInt();
+
+    		                            try {
+    		                                Voting.makeVote(candidateId);
+    		                                System.out.println("Voto registrado com sucesso!");
+    		                                voted = true;
+    		                            } catch (Exception e) {
+    		                                System.out.println("Erro ao registrar o voto: " + e.getMessage());
+    		                            }
+    		                            break;
+    		                        case 4:
+    		                            voted = true;
+    		                            break;
+    		                        default:
+    		                            System.out.println("Opção inválida.");
+    		                            break;
+    		                    }
+    		                } while (!voted);
+    		            }
+    		        }
+    		    } while (vChoice != 2);
+    		    break;
+
     		case 5:
     			System.out.println("------------ RELATÓRIO ------------");
     			List<String> votacoes = Database.listVotesTables();
@@ -290,16 +338,20 @@ public class Eng_software_urna_eletronica {
     				System.out.println(i + ". " + votacoes.get(i));
     			}
     			System.out.println("Qual votação você deseja ver o relatório: ");
+    			Integer votacao = sc.nextInt();
     			
+    			if(votacoes.get(votacao) != null) {
+    				Voting.makeRelatorio(votacoes.get(votacao));
+    			}
     			
         		break;
+    		case 6:
+    			System.out.println("Informe a quantidade de pessoas a ser adicionadas(min 500): ");
+    			Integer qTy = sc.nextInt();
+    			Database.seedDatabase(Math.max(qTy, 500));
     		}
-    	}while(c0 != 6 ); // Close Menu
-//    	Database.seedDatabase(500);
-    	
-    	User teste = new User(0,"Jhony","PTsOL","PRESIDENTE");
-    	Database.insertUser(teste);
-    	Database.removeUser(499);
-    	
+    	}while(c0 != 7 ); // Close Menu
+
+    	sc.close();
     }
 }

@@ -78,44 +78,47 @@ public class Database {
     }
     
     public static void initializeVoting(Integer votingQuantity) throws SQLException {
-    	Connection con = getConnection();
-    	
-    	if(con != null) {
-    		String createTableSQL = String.format("""
-    			    CREATE TABLE IF NOT EXISTS voting_%d (
-    			        id_candidate INTEGER PRIMARY KEY NOT NULL UNIQUE,
-    			        quantity INTEGER
-    			    );
-    			""", votingQuantity);
+        Connection con = getConnection();
 
-    		
-    		
+        if (con != null) {
+            String createTableSQL = String.format("""
+                    CREATE TABLE IF NOT EXISTS voting_%d (
+                        id_candidate INTEGER NOT NULL,
+                        quantity INTEGER DEFAULT 0,
+                        cargo VARCHAR(255) NOT NULL,
+                        PRIMARY KEY (id_candidate, cargo)  -- Restriçāo de unicidade composta
+                    );
+                """, votingQuantity);
+
             Statement stmt = con.createStatement();
             stmt.execute(createTableSQL);
             System.out.println("Tabela Voting criada (ou já existente).");
+
             con.close();
-    	}else {
-    		System.out.println("Não foi possível inicializar o banco de dados.");
-    	}
+        } else {
+            System.out.println("Não foi possível inicializar o banco de dados.");
+        }
     }
     
     public static List<String> listVotesTables() throws SQLException {
         List<String> tableNames = new ArrayList<>();
         String searchTableSQL = """
-            SELECT table_name
-            FROM information_schema.tables
-            WHERE table_name LIKE 'voting_%'
-              AND table_type = 'BASE TABLE'
-            ORDER BY table_name
-        """;
+        	    SELECT table_name
+        	    FROM information_schema.tables
+        	    WHERE table_name LIKE 'voting_%'
+        	      AND table_type = 'BASE TABLE'
+        	    ORDER BY CAST(regexp_replace(table_name, '[^0-9]', '', 'g') AS INTEGER) ASC;
+        	""";
+
 
         try (Connection con = getConnection();
              Statement stmt = con.createStatement();
              ResultSet rs = stmt.executeQuery(searchTableSQL)) {
- 
+
             while (rs.next()) {
                 tableNames.add(rs.getString("table_name"));
             }
+
         } catch (SQLException e) {
             System.out.println("Erro ao listar tabelas de votos: " + e.getMessage());
             throw e; 
@@ -123,6 +126,7 @@ public class Database {
 
         return tableNames;
     }
+
     
     
     public static void seedDatabase(Integer quantity) throws SQLException {
@@ -186,10 +190,8 @@ public class Database {
         try (Connection con = getConnection();
              PreparedStatement pstmt = con.prepareStatement(removeSQL)) {
 
-            // Define o parâmetro para a instrução preparada
             pstmt.setInt(1, id);
 
-            // Executa a instrução e obtém o número de linhas afetadas
             int rowsAffected = pstmt.executeUpdate();
             if (rowsAffected > 0) {
                 System.out.printf("Usuário com ID %d removido com sucesso! Linhas afetadas: %d%n", id, rowsAffected);
@@ -224,6 +226,52 @@ public class Database {
         }
         return null;
     }
+    
+    public static List<User> getMultiplesUsers(List<Integer> ids) {
+        List<User> usersList = new ArrayList<>();
+        
+        if (ids == null || ids.isEmpty()) {
+            System.out.println("A lista de IDs está vazia.");
+            return usersList;
+        }
+
+        StringBuilder sqlBuilder = new StringBuilder("SELECT id, nome, partido, cargo FROM users WHERE id IN (");
+        
+        for (int i = 0; i < ids.size(); i++) {
+            sqlBuilder.append("?");
+            if (i < ids.size() - 1) {
+                sqlBuilder.append(",");
+            }
+        }
+        sqlBuilder.append(");");
+
+        String selectSQL = sqlBuilder.toString();
+
+        try (Connection con = getConnection();
+             PreparedStatement pstmt = con.prepareStatement(selectSQL)) {
+            
+            for (int i = 0; i < ids.size(); i++) {
+                pstmt.setInt(i + 1, ids.get(i));
+            }
+            
+            ResultSet rs = pstmt.executeQuery();
+
+            while (rs.next()) {
+                User user = new User(
+                    rs.getInt("id"),
+                    rs.getString("nome"),
+                    rs.getString("partido"),
+                    rs.getString("cargo")
+                );
+                usersList.add(user);
+            }
+        } catch (SQLException e) {
+            System.err.println("Erro ao buscar múltiplos usuários no banco de dados: " + e.getMessage());
+        }
+
+        return usersList;
+    }
+
 
     
     public static Integer getPagesNumber(String cargo) {
@@ -293,6 +341,7 @@ public class Database {
     
     
     public static void editUser(User pessoa) {
+        // Atualizar os dados na tabela 'users'
         String updateSQL = """
                 UPDATE users SET nome = ?, partido = ?, cargo = ? WHERE id = ?;
             """;
@@ -312,10 +361,40 @@ public class Database {
                 System.out.printf("Nenhum usuário encontrado com o ID %d.%n", pessoa.getId());
             }
 
+            // Atualizar o cargo na tabela de votação mais recente
+            // Localizando a tabela de votação mais recente
+            List<String> tables = listVotesTables();
+            if (tables.isEmpty()) {
+                System.out.println("Nenhuma tabela de votação encontrada.");
+                return;
+            }
+
+            String currentTable = tables.get(tables.size() - 1);  // Pega a tabela mais recente
+
+            // Atualizando o cargo na tabela de votação
+            String updateVotingSQL = String.format("""
+                    UPDATE %s
+                    SET cargo = ?
+                    WHERE id_candidate = ?;
+                """, currentTable);
+
+            try (PreparedStatement pstmtVoting = con.prepareStatement(updateVotingSQL)) {
+                pstmtVoting.setString(1, pessoa.getCargo());  // Novo cargo
+                pstmtVoting.setInt(2, pessoa.getId());       // ID do candidato
+
+                int votingRowsAffected = pstmtVoting.executeUpdate();
+                if (votingRowsAffected > 0) {
+                    System.out.printf("Cargo do candidato na tabela %s atualizado com sucesso! Linhas afetadas: %d%n", currentTable, votingRowsAffected);
+                } else {
+                    System.out.println("Nenhum cargo encontrado para o candidato na tabela de votação.");
+                }
+            }
+
         } catch (SQLException e) {
             System.err.println("Erro ao atualizar o usuário no banco de dados: " + e.getMessage());
         }
     }
+
 
     
     public static void makeVote(Integer idCandidate) throws SQLException {
@@ -327,17 +406,38 @@ public class Database {
 
         String currentTable = tables.get(tables.size() - 1); 
 
+
+        String getCargoSQL = """
+            SELECT cargo FROM users WHERE id = ?;
+        """;
+
+        String cargo = null;
+        try (Connection con = getConnection();
+             PreparedStatement pstmt = con.prepareStatement(getCargoSQL)) {
+
+            pstmt.setInt(1, idCandidate);
+            ResultSet rs = pstmt.executeQuery();
+
+            if (rs.next()) {
+                cargo = rs.getString("cargo");
+            } else {
+                System.out.println("Candidato não encontrado.");
+                return;
+            }
+        }
+
         String updateSQL = String.format("""
-                INSERT INTO %s (id_candidate, quantity)
-                VALUES (?, 1)
-                ON CONFLICT (id_candidate)
+                INSERT INTO %s (id_candidate, quantity, cargo)
+                VALUES (?, 1, ?)
+                ON CONFLICT (id_candidate, cargo)
                 DO UPDATE SET quantity = %s.quantity + 1;
             """, currentTable, currentTable);
 
         try (Connection con = getConnection();
              PreparedStatement pstmt = con.prepareStatement(updateSQL)) {
 
-            pstmt.setInt(1, idCandidate);
+            pstmt.setInt(1, idCandidate);  // ID do candidato
+            pstmt.setString(2, cargo);     // Cargo do candidato
 
             int rowsAffected = pstmt.executeUpdate();
             System.out.printf("Voto registrado com sucesso! Linhas afetadas: %d%n", rowsAffected);
@@ -348,5 +448,93 @@ public class Database {
         }
     }
 
+
+
+    public static List<User>listVotacao(String votingTable) throws SQLException{        		
+        String selectSQL = String.format("""
+                  SELECT id_candidate, quantity
+        FROM %s ;
+            """, votingTable);
+        
+        try (Connection con = getConnection();
+                PreparedStatement pstmt = con.prepareStatement(selectSQL)) {
+        	
+    	   List<Integer> entradas = new ArrayList<>();
+        	try (ResultSet rs = pstmt.executeQuery()){
+                while (rs.next()) {
+                    Integer id_candidate = rs.getInt("id_candidate");
+                    Integer quantity = rs.getInt("quantity");
+                    
+                    
+                    entradas.add(id_candidate);
+                }
+                
+                return getMultiplesUsers(entradas);
+        	}
+        	
+        }catch(SQLException e) {
+            System.err.println("Erro ao pegar as entradas da votação: " + e.getMessage());
+            throw e; 
+        }    		
+    }
     
+    public static List<User> getElected(String votingTable) throws SQLException {
+        List<User> electedCandidates = new ArrayList<>();
+
+        // Consulta SQL para obter os candidatos com o maior número de votos por cargo
+        String selectSQL = String.format("""
+            SELECT id_candidate, cargo, MAX(quantity) AS max_quantity
+            FROM %s
+            GROUP BY cargo, id_candidate
+            ORDER BY cargo, max_quantity DESC;
+        """, votingTable);
+
+        try (Connection con = getConnection();
+             PreparedStatement pstmt = con.prepareStatement(selectSQL)) {
+
+            ResultSet rs = pstmt.executeQuery();
+
+            // Para cada cargo, buscamos o candidato com maior número de votos
+            while (rs.next()) {
+                Integer idCandidate = rs.getInt("id_candidate");
+                String cargo = rs.getString("cargo");
+                Integer maxVotes = rs.getInt("max_quantity");
+
+                // Consulta para obter os dados do candidato (nome, partido, cargo)
+                String selectCandidateSQL = """
+                    SELECT id, nome, partido, cargo
+                    FROM users
+                    WHERE id = ?;
+                """;
+
+                try (PreparedStatement candidateStmt = con.prepareStatement(selectCandidateSQL)) {
+                    candidateStmt.setInt(1, idCandidate);
+                    ResultSet candidateRs = candidateStmt.executeQuery();
+
+                    if (candidateRs.next()) {
+                        User candidate = new User(
+                            candidateRs.getInt("id"),
+                            candidateRs.getString("nome"),
+                            candidateRs.getString("partido"),
+                            candidateRs.getString("cargo")
+                        );
+                        
+                        // Aqui, incluímos a quantidade de votos no objeto User
+                        candidate.setQuantity(maxVotes);
+
+                        electedCandidates.add(candidate);
+                    }
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("Erro ao buscar os candidatos mais votados: " + e.getMessage());
+            throw e;
+        }
+
+        return electedCandidates;
+    }
+
+
+
+
 }

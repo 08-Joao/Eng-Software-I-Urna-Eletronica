@@ -13,18 +13,27 @@ public class User {
     private String nome;
     private String partido;
     private String cargo;
+    private Integer quantity = 0;
 
     // Construtor principal
     public User(Integer id, String nome, String partido, String cargo) {
         this.id = id;
         this.nome = nome;
-        this.partido = partido != null ? partido : ""; // Evita null
-        this.cargo = cargo != null ? cargo : "";       // Evita null
+        this.partido = partido != null ? partido : ""; 
+        this.cargo = cargo != null ? cargo : "";      
     }
 
-    // Construtor auxiliar para usuários sem partido
+
+    public User(Integer id, String nome, String partido, String cargo, Integer quantity) {
+        this.id = id;
+        this.nome = nome;
+        this.partido = partido != null ? partido : ""; 
+        this.cargo = cargo != null ? cargo : "";      
+        this.quantity = 0;
+    }
+    
     public User(Integer id, String nome, String cargo) {
-        this(id, nome, null, cargo); // Chama o construtor principal com partido como null
+        this(id, nome, null, cargo); 
     }
 
     // Getters e Setters
@@ -60,13 +69,21 @@ public class User {
         this.cargo = cargo;
     }
 
+    public Integer getQuantity() {
+        return quantity;
+    }
+
+    public void setQuantity(Integer quantity) {
+        this.quantity = quantity;
+    }
+    
     @Override
     public String toString() {
-        return "User{" +
-                "id=" + id +
-                ", nome='" + nome + '\'' +
-                ", partido='" + partido + '\'' +
-                ", cargo='" + cargo + '\'' +
-                '}';
+    	if(quantity == 0) {
+            return "Usuário [" + id + "] Nome: " + nome + " Partido: " + partido + " Cargo: " + cargo;
+    	}else {
+    		return "Usuário [" + id + "] Nome: " + nome + " Partido: " + partido + " Cargo: " + cargo + " Votos [" + quantity + "]";
+    	}
+
     }
 }

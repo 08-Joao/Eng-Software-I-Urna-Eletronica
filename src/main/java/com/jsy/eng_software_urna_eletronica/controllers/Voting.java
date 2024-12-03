@@ -16,5 +16,23 @@ public class Voting {
 			Database.makeVote(id);								
 		}
 	}
+	
+	
+	
+	public static void makeRelatorio(String votingTable) throws SQLException {
+		System.out.println("Lista dos candidatos da " + votingTable);
+		List<User> entradas = Database.listVotacao(votingTable);
+		
+		for(User candidato : entradas) {
+			candidato.toString();
+		}
+		
+		System.out.println("-------- ELEGIDOS --------");
+		List<User> elegidos = Database.getElected(votingTable);
+		
+		for(User elegido : elegidos) {
+			System.out.println(elegido.toString());
+		}
+	}
 
 }
