@@ -6,6 +6,7 @@ package com.jsy.eng_software_urna_eletronica;
 
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.List;
 import java.util.Scanner;
 
 import com.jsy.eng_software_urna_eletronica.controllers.Database;
@@ -156,6 +157,41 @@ public class Eng_software_urna_eletronica {
         					}
         					break;
         				case 3:
+        					Boolean isCivil = eCargo.equalsIgnoreCase("CIVIL");
+        					Boolean validChoice2 = false;
+        					
+        					do {
+	        					System.out.println("Informe o cargo da pessoa: ");        			    	        
+				    	        System.out.println("1. SENADOR");
+				    	        System.out.println("2. DEPUTADO");
+				    	        System.out.println("3. GOVERNADOR");
+				    	        System.out.println("4. PRESIDENTE");
+				    	        int cargoChoice2 = sc.nextInt();
+				    	        
+				    	        switch(cargoChoice2) {
+				    	        case 1:
+				    	        	eCargo = "SENADOR";
+				    	        	validChoice2 = true;
+				    	        	break;
+				    	        case 2:
+				    	        	eCargo = "DEPUTADO";
+				    	        	validChoice2 = true;
+				    	        	break;
+		    	        		case 3:
+				    	        	eCargo = "GOVERNADOR";
+				    	        	validChoice2 = true;
+				    	        	break;
+								case 4:
+									eCargo = "PRESIDENTE";
+									validChoice2 = true;
+									break;
+				    	        }
+        					}while(!validChoice2);
+        					
+        					if(isCivil) {
+        						System.out.println("Informe o partido do usuário: ");
+        						ePartido = sc.nextLine();
+        					}
         					
         					break;
         				default:
@@ -167,9 +203,94 @@ public class Eng_software_urna_eletronica {
     			
         		break;
     		case 4:
+    			int vChoice = sc.nextInt();
+    	        
+    			do {
+    				System.out.println("------------ VOTAÇÃO ------------");
+    				Voting.startVoting();
+    				System.out.println("Informe a opção desejada: ");        			    	        
+    				System.out.println("1. Votar");
+    				System.out.println("2. Finalizar");    	        
+    				
+    				System.out.println("Informe para qual cargo deseja votar: ");
+        	        System.out.println("1. Senador");
+        	        System.out.println("2. Deputado");
+        	        System.out.println("3. Governador");
+        	        System.out.println("4. Presidente");    	 
+    				int vcChoice = sc.nextInt();
+    				String vCargo = null;
+    				
+    				switch(vcChoice) {
+    				case 1:
+    					vCargo = "SENADOR";
+    					break;
+    				case 2:
+    					vCargo = "DEPUTADO";
+    					break;
+    				case 3:
+    					vCargo = "GOVERNADOR";
+    					break;
+    				case 4:
+    					vCargo = "PRESIDENTE";
+    					break;
+					default:
+						System.out.println("Cargo inválido.");
+						break;
+    				}
+        	        
+    				int currentPage = 1;
+    				Boolean voted = false;
+        	        if(vCargo != null){        	        
+        	        	do {
+            	        	System.out.println("Listando Candidatos do Cargo [" + vCargo + "]");
+            	        	List<User> candidatos = Database.listCandidates(vCargo, currentPage);
+            	        	
+            	        	for(User pessoa : candidatos) {
+            	        		pessoa.toString();
+            	        	}
+            	        	
+            	        	System.out.println("Página atual: " + currentPage);
+            	        	System.out.println("Informe o que deseja fazer: ");
+            	        	System.out.println("1. Página para direita(+1)");
+            	        	System.out.println("2. Página para esquerda(-1)");
+            	        	System.out.println("3. Votar");
+            	        	int fvChoice = sc.nextInt();
+            	        	
+            	        	
+            	        	switch(fvChoice) {
+            	        	case 1:
+            	        		currentPage += 1;
+            	        		break;
+            	        	case 2:
+            	        		currentPage = Math.max(1, currentPage - 1);
+            	        		break;
+            	        	case 3:
+            	        		System.out.println("Informe o id do candidato; ");
+            	        		Integer candidateId = sc.nextInt();
+            	        		
+            	        		Voting.makeVote(candidateId);
+            	        		voted = true;
+            	        		break;
+            	        	default:
+            	        		System.out.println("Entrada inválida");            	       
+            	        		break;
+            	        	}
+        	        	}while(!voted);
+        	        }
+        	        
+    			}while(vChoice == 1);
     			
         		break;
     		case 5:
+    			System.out.println("------------ RELATÓRIO ------------");
+    			List<String> votacoes = Database.listVotesTables();
+    			System.out.println("Lista de votações no histórico: ");
+    			
+    			for(int i = 0; i < votacoes.size(); i++) {
+    				System.out.println(i + ". " + votacoes.get(i));
+    			}
+    			System.out.println("Qual votação você deseja ver o relatório: ");
+    			
     			
         		break;
     		}

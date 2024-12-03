@@ -6,12 +6,15 @@ import java.util.List;
 public class Voting {
 	public static void startVoting() throws SQLException {
 		
-		
 		List<String> tableNames = Database.listVotesTables();
-		Database.initializeVoting(tableNames.size());
+		Database.initializeVoting(tableNames.size());		
 		
-		System.out.println("Listas encontradas: " + tableNames);
 		}
 	
+	public static void makeVote(Integer id) throws SQLException {
+		if(Database.getUser(id) != null) {
+			Database.makeVote(id);								
+		}
+	}
 
 }

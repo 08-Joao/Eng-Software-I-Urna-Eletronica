@@ -226,6 +226,72 @@ public class Database {
     }
 
     
+    public static Integer getPagesNumber(String cargo) {
+        String countSQL = """
+                SELECT COUNT(*) AS total 
+                FROM users 
+                WHERE cargo = ?;
+            """;
+
+        try (Connection con = getConnection();
+             PreparedStatement pstmt = con.prepareStatement(countSQL)) {
+
+            pstmt.setString(1, cargo.toUpperCase());
+
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    int totalCandidates = rs.getInt("total");
+
+                    return (int) Math.ceil(totalCandidates / 100.0);
+                }
+            }
+
+        } catch (SQLException e) {
+            System.err.println("Erro ao obter número de páginas: " + e.getMessage());
+        }
+
+        return 0;
+    }
+
+    
+    public static List<User> listCandidates(String cargo, Integer offset) {
+        String selectSQL = """
+                SELECT id, nome, partido, cargo 
+                FROM users 
+                WHERE cargo = ? 
+                LIMIT 100 OFFSET ?;
+            """;
+
+        List<User> candidates = new ArrayList<>();
+
+        try (Connection con = getConnection();
+             PreparedStatement pstmt = con.prepareStatement(selectSQL)) {
+
+
+            pstmt.setString(1, cargo.toUpperCase());
+            pstmt.setInt(2, offset);
+
+            try (ResultSet rs = pstmt.executeQuery()) {
+
+                while (rs.next()) {
+                    Integer id = rs.getInt("id");
+                    String nome = rs.getString("nome");
+                    String partido = rs.getString("partido");
+                    String cargoResult = rs.getString("cargo");
+ 
+                    User user = new User(id, nome, partido, cargoResult);
+                    candidates.add(user);
+                }
+            }
+
+        } catch (SQLException e) {
+            System.err.println("Erro ao listar candidatos: " + e.getMessage());
+        }
+
+        return candidates;
+    }
+    
+    
     public static void editUser(User pessoa) {
         String updateSQL = """
                 UPDATE users SET nome = ?, partido = ?, cargo = ? WHERE id = ?;
@@ -248,6 +314,37 @@ public class Database {
 
         } catch (SQLException e) {
             System.err.println("Erro ao atualizar o usuário no banco de dados: " + e.getMessage());
+        }
+    }
+
+    
+    public static void makeVote(Integer idCandidate) throws SQLException {
+        List<String> tables = listVotesTables();
+        if (tables.isEmpty()) {
+            System.out.println("Nenhuma tabela de votação encontrada.");
+            return;
+        }
+
+        String currentTable = tables.get(tables.size() - 1); 
+
+        String updateSQL = String.format("""
+                INSERT INTO %s (id_candidate, quantity)
+                VALUES (?, 1)
+                ON CONFLICT (id_candidate)
+                DO UPDATE SET quantity = %s.quantity + 1;
+            """, currentTable, currentTable);
+
+        try (Connection con = getConnection();
+             PreparedStatement pstmt = con.prepareStatement(updateSQL)) {
+
+            pstmt.setInt(1, idCandidate);
+
+            int rowsAffected = pstmt.executeUpdate();
+            System.out.printf("Voto registrado com sucesso! Linhas afetadas: %d%n", rowsAffected);
+
+        } catch (SQLException e) {
+            System.err.println("Erro ao registrar o voto: " + e.getMessage());
+            throw e; 
         }
     }
 
