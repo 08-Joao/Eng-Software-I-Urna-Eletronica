@@ -356,9 +356,9 @@ public class Database {
 
             int rowsAffected = pstmt.executeUpdate();
             if (rowsAffected > 0) {
-                System.out.printf("Usuário com ID %d atualizado com sucesso! Linhas afetadas: %d%n", pessoa.getId(), rowsAffected);
+                System.out.printf("\nUsuário com ID %d atualizado com sucesso! Linhas afetadas: %d%n", pessoa.getId(), rowsAffected);
             } else {
-                System.out.printf("Nenhum usuário encontrado com o ID %d.%n", pessoa.getId());
+                System.out.printf("\nNenhum usuário encontrado com o ID %d.%n", pessoa.getId());
             }
 
             // Atualizar o cargo na tabela de votação mais recente
