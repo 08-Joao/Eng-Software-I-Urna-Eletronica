@@ -11,6 +11,28 @@ import java.util.List;
 
 public class Functions {
     Scanner sc = new Scanner(System.in);
+    private static final String ADMIN_USERNAME = "admin";
+    private static final String ADMIN_PASSWORD = "admin";
+
+    // New method to verify admin credentials
+    private boolean verifyAdmin() {
+        // Clear any lingering input from previous operations
+        if (sc.hasNextLine()) {
+            try {
+                sc.nextLine(); // Attempt to consume any leftover newline
+            } catch (Exception e) {
+                // Ignore any exceptions that might occur during buffer clearing
+            }
+        }
+
+        System.out.println("\n------------ ADMIN LOGIN ------------");
+        System.out.print("Username: ");
+        String username = sc.nextLine();
+        System.out.print("Password: ");
+        String password = sc.nextLine();
+        
+        return ADMIN_USERNAME.equals(username) && ADMIN_PASSWORD.equals(password);
+    }
 
     public void ExibeMenu(){
             System.out.println("\n-------------------- MENU --------------------");
@@ -67,6 +89,11 @@ public class Functions {
         }
 
         public void Remover(){
+            if (!verifyAdmin()) {
+                System.out.println("Acesso negado. Apenas administradores podem remover usuários.");
+                return;
+            }
+
             System.out.println("\n------------ REMOÇÃO ------------");
             System.out.print("Informe o ID do usuário a ser removido: ");
             Integer id = sc.nextInt();
@@ -74,6 +101,11 @@ public class Functions {
         }
 
         public void Editar(){
+            if (!verifyAdmin()) {
+                System.out.println("Acesso negado. Apenas administradores podem editar usuários.");
+                return;
+            }
+
             System.out.println("\n------------ EDIÇÃO -------------");
                 System.out.print("Informe o id do usuário a ser editado: ");
                 Integer eId = sc.nextInt();
@@ -211,9 +243,9 @@ public class Functions {
 
     		        if (vChoice == 1) {
     		            System.out.println("\n.........Processando.........");
-						System.out.println("1. SENADOR     3. GOVERNADOR\n2. DEPUTADO    4. PRESIDENTE");
-						System.out.println("\n.............................");
-						System.out.print("Informe para qual cargo deseja votar:");
+					System.out.println("1. SENADOR     3. GOVERNADOR\n2. DEPUTADO    4. PRESIDENTE");
+					System.out.println("\n.............................");
+					System.out.print("Informe para qual cargo deseja votar:");
 
     		            int vcChoice = sc.nextInt();
     		            String vCargo = null;
@@ -302,6 +334,11 @@ public class Functions {
         }
     
         public void Relatorio() throws SQLException{
+            if (!verifyAdmin()) {
+                System.out.println("Acesso negado. Apenas administradores podem ver relatórios.");
+                return;
+            }
+
             System.out.println("\n-------------------- RELATÓRIO -----------------");
     			List<String> votacoes = Database.listVotesTables();
     			System.out.println("Lista de votações no histórico: ");
@@ -319,6 +356,11 @@ public class Functions {
         }
 
         public void PopularBD() throws SQLException{
+            if (!verifyAdmin()) {
+                System.out.println("Acesso negado. Apenas administradores podem popular o banco de dados.");
+                return;
+            }
+
             System.out.print("Informe a quantidade de pessoas a ser adicionadas(min 500): ");
     			Integer qTy = sc.nextInt();
     			Database.seedDatabase(Math.max(qTy, 500));

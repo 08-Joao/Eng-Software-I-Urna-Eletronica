@@ -49,5 +49,7 @@ public class Eng_software_urna_eletronica {
     			func.PopularBD();
     		}
     	}while(c0 != 7 ); // Close Menu
+    	
+    	sc.close();
     }
 }

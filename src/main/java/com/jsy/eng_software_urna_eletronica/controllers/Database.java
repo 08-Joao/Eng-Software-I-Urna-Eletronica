@@ -29,7 +29,7 @@ public class Database {
 	
 	private static Connection getConnection() {
         // URL, usuário e senha do banco de dados
-        String url = "jdbc:postgresql://ep-round-dust-a5gw1o2x.us-east-2.aws.neon.tech/Urna%20eletr%C3%B4nica?user=Urna%20eletr%C3%B4nica_owner&password=X6xfC4EpSRBA&sslmode=require";
+		String url = "jdbc:postgresql://ep-round-dust-a5gw1o2x-pooler.us-east-2.aws.neon.tech/Urna%20eletr%C3%B4nica?user=Urna%20eletr%C3%B4nica_owner&password=X6xfC4EpSRBA&sslmode=require";
 
 
         try {
@@ -450,32 +450,30 @@ public class Database {
 
 
 
-    public static List<User>listVotacao(String votingTable) throws SQLException{        		
+    public static List<User>listVotacao(String votingTable) throws SQLException {        		
         String selectSQL = String.format("""
-                  SELECT id_candidate, quantity
-        FROM %s ;
-            """, votingTable);
+            SELECT id_candidate, quantity
+            FROM %s 
+            WHERE quantity > 0;
+        """, votingTable);
         
         try (Connection con = getConnection();
                 PreparedStatement pstmt = con.prepareStatement(selectSQL)) {
-        	
-    	   List<Integer> entradas = new ArrayList<>();
-        	try (ResultSet rs = pstmt.executeQuery()){
+        
+           List<Integer> entradas = new ArrayList<>();
+            try (ResultSet rs = pstmt.executeQuery()) {
                 while (rs.next()) {
                     Integer id_candidate = rs.getInt("id_candidate");
-                    Integer quantity = rs.getInt("quantity");
-                    
-                    
                     entradas.add(id_candidate);
                 }
                 
-                return getMultiplesUsers(entradas);
-        	}
-        	
-        }catch(SQLException e) {
+                // Only return users if there are entries with votes
+                return entradas.isEmpty() ? new ArrayList<>() : getMultiplesUsers(entradas);
+            }
+        } catch(SQLException e) {
             System.err.println("Erro ao pegar as entradas da votação: " + e.getMessage());
             throw e; 
-        }    		
+        }        		
     }
     
     public static List<User> getElected(String votingTable) throws SQLException {
