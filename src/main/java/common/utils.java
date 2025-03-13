@@ -2,7 +2,8 @@ package common;
 
 import java.util.Random;
 
-import com.jsy.eng_software_urna_eletronica.controllers.User;
+import com.jsy.eng_software_urna_eletronica.controllers.Candidato;
+//import com.jsy.eng_software_urna_eletronica.controllers.User;
 
 public class utils {
 	private static final String[] FIRST_NAMES = { "Jorge", "Joao", "Henrique", "Gustavo", "Guilherme", "Ornofre", "Ian",
@@ -66,7 +67,7 @@ public class utils {
 	    return PARTIDOS[RANDOM.nextInt(PARTIDOS.length)];
 	}
 
-	public static User generateRandomUser() {
+	public static Candidato generateRandomUser() {
 	    String cargo = gerarCargo();
 
 	    String partido = cargo.equals("CIVIL") ? null : gerarPartido();
@@ -76,7 +77,7 @@ public class utils {
 	        partido = null;
 	    }
 
-	    return new User(0, gerarNome(), partido, cargo);
+	    return new Candidato(0, gerarNome(), partido, cargo);
 	}
 
 	

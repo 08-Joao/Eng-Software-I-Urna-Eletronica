@@ -1,6 +1,5 @@
 package com.jsy.eng_software_urna_eletronica.controllers;
 
-
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
@@ -9,19 +8,13 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Scanner;
 
 import common.utils;
 
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
-
-/**
- *
- * @author Joao
- */
 public class Database {
+
+      Scanner sc = new Scanner(System.in);
     
 	public Database() throws SQLException{
 		initializeUsers();
@@ -29,7 +22,7 @@ public class Database {
 	
 	private static Connection getConnection() {
         // URL, usuário e senha do banco de dados
-		String url = "jdbc:postgresql://ep-round-dust-a5gw1o2x-pooler.us-east-2.aws.neon.tech/Urna%20eletr%C3%B4nica?user=Urna%20eletr%C3%B4nica_owner&password=X6xfC4EpSRBA&sslmode=require";
+        String url = "jdbc:postgresql://ep-round-dust-a5gw1o2x.us-east-2.aws.neon.tech/Urna%20eletr%C3%B4nica?user=Urna%20eletr%C3%B4nica_owner&password=X6xfC4EpSRBA&sslmode=require";
 
 
         try {
@@ -48,10 +41,7 @@ public class Database {
         // Retorna nulo se a conexão falhar
         return null;
     }
-    
-    
-    
-    
+  
     private static void initializeUsers() throws SQLException {
     	
     	Connection con = getConnection();
@@ -125,9 +115,7 @@ public class Database {
         }
 
         return tableNames;
-    }
-
-    
+    }   
     
     public static void seedDatabase(Integer quantity) throws SQLException {
         if (quantity == null || quantity <= 0) {
@@ -142,7 +130,7 @@ public class Database {
              PreparedStatement pstmt = con.prepareStatement(insertSQL)) {
 
             for (int i = 0; i < quantity; i++) {
-                User pessoa = utils.generateRandomUser();
+                Candidato pessoa = utils.generateRandomUser();
                 
                 pstmt.setString(1, pessoa.getNome());
                 pstmt.setString(2, pessoa.getPartido());
@@ -158,11 +146,9 @@ public class Database {
             System.err.println("Erro ao popular o banco de dados: " + e.getMessage());
             throw e;
         }
-    }
-
+    } 
     
-    
-    public static void insertUser(User pessoa) {
+    public static void insertUser(Candidato pessoa) {
         String insertSQL = """
                 INSERT INTO users (nome, partido, cargo) VALUES (?, ?, ?);
             """;
@@ -204,7 +190,7 @@ public class Database {
         }
     }
 
-    public static User getUser(Integer id) {
+    public static Candidato getCandidato(Integer id) {
         String selectSQL = """
                 SELECT * FROM users WHERE id = ?;
             """;
@@ -216,7 +202,7 @@ public class Database {
             ResultSet rs = pstmt.executeQuery();
 
             if (rs.next()) {
-                User pessoa = new User(rs.getInt("id"),rs.getString("nome"),rs.getString("partido"),rs.getString("cargo"));                
+                Candidato pessoa = new Candidato(rs.getInt("id"),rs.getString("nome"),rs.getString("partido"),rs.getString("cargo"));                
                 return pessoa;
             } else {
                 System.out.printf("Nenhum usuário encontrado com o ID %d.%n", id);
@@ -227,12 +213,12 @@ public class Database {
         return null;
     }
     
-    public static List<User> getMultiplesUsers(List<Integer> ids) {
-        List<User> usersList = new ArrayList<>();
+    public static List<Candidato> getMultiplesUsers(List<Integer> ids) {
+        List<Candidato> caditatsList = new ArrayList<>();
         
         if (ids == null || ids.isEmpty()) {
             System.out.println("A lista de IDs está vazia.");
-            return usersList;
+            return caditatsList;
         }
 
         StringBuilder sqlBuilder = new StringBuilder("SELECT id, nome, partido, cargo FROM users WHERE id IN (");
@@ -257,23 +243,21 @@ public class Database {
             ResultSet rs = pstmt.executeQuery();
 
             while (rs.next()) {
-                User user = new User(
+                Candidato candidato = new Candidato(
                     rs.getInt("id"),
                     rs.getString("nome"),
                     rs.getString("partido"),
                     rs.getString("cargo")
                 );
-                usersList.add(user);
+                caditatsList.add(candidato);
             }
         } catch (SQLException e) {
             System.err.println("Erro ao buscar múltiplos usuários no banco de dados: " + e.getMessage());
         }
 
-        return usersList;
+        return caditatsList;
     }
 
-
-    
     public static Integer getPagesNumber(String cargo) {
         String countSQL = """
                 SELECT COUNT(*) AS total 
@@ -301,7 +285,6 @@ public class Database {
         return 0;
     }
 
-    
     public static List<User> listCandidates(String cargo, Integer offset) {
         String selectSQL = """
                 SELECT id, nome, partido, cargo 
@@ -327,7 +310,7 @@ public class Database {
                     String partido = rs.getString("partido");
                     String cargoResult = rs.getString("cargo");
  
-                    User user = new User(id, nome, partido, cargoResult);
+                    User user = new Candidato(id, nome, partido, cargoResult);
                     candidates.add(user);
                 }
             }
@@ -338,9 +321,8 @@ public class Database {
 
         return candidates;
     }
-    
-    
-    public static void editUser(User pessoa) {
+     
+    public static void editCandidato(Candidato pessoa) {
         // Atualizar os dados na tabela 'users'
         String updateSQL = """
                 UPDATE users SET nome = ?, partido = ?, cargo = ? WHERE id = ?;
@@ -395,8 +377,6 @@ public class Database {
         }
     }
 
-
-    
     public static void makeVote(Integer idCandidate) throws SQLException {
         List<String> tables = listVotesTables();
         if (tables.isEmpty()) {
@@ -448,36 +428,35 @@ public class Database {
         }
     }
 
-
-
-    public static List<User>listVotacao(String votingTable) throws SQLException {        		
+    public static List<Candidato>listVotacao(String votingTable) throws SQLException{        		
         String selectSQL = String.format("""
-            SELECT id_candidate, quantity
-            FROM %s 
-            WHERE quantity > 0;
-        """, votingTable);
+                  SELECT id_candidate, quantity
+        FROM %s ;
+            """, votingTable);
         
         try (Connection con = getConnection();
                 PreparedStatement pstmt = con.prepareStatement(selectSQL)) {
-        
-           List<Integer> entradas = new ArrayList<>();
-            try (ResultSet rs = pstmt.executeQuery()) {
+        	
+    	   List<Integer> entradas = new ArrayList<>();
+        	try (ResultSet rs = pstmt.executeQuery()){
                 while (rs.next()) {
                     Integer id_candidate = rs.getInt("id_candidate");
+                    Integer quantity = rs.getInt("quantity");
+
                     entradas.add(id_candidate);
                 }
                 
-                // Only return users if there are entries with votes
-                return entradas.isEmpty() ? new ArrayList<>() : getMultiplesUsers(entradas);
-            }
-        } catch(SQLException e) {
+                return getMultiplesUsers(entradas);
+        	}
+        	
+        }catch(SQLException e) {
             System.err.println("Erro ao pegar as entradas da votação: " + e.getMessage());
             throw e; 
-        }        		
+        }    		
     }
     
-    public static List<User> getElected(String votingTable) throws SQLException {
-        List<User> electedCandidates = new ArrayList<>();
+    public static List<Candidato> getElected(String votingTable) throws SQLException {
+        List<Candidato> electedCandidates = new ArrayList<>();
 
         // Consulta SQL para obter os candidatos com o maior número de votos por cargo
         String selectSQL = String.format("""
@@ -510,7 +489,7 @@ public class Database {
                     ResultSet candidateRs = candidateStmt.executeQuery();
 
                     if (candidateRs.next()) {
-                        User candidate = new User(
+                        Candidato candidate = new Candidato(
                             candidateRs.getInt("id"),
                             candidateRs.getString("nome"),
                             candidateRs.getString("partido"),
@@ -531,8 +510,4 @@ public class Database {
 
         return electedCandidates;
     }
-
-
-
-
 }
