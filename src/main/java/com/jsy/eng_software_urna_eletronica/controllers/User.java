@@ -105,6 +105,7 @@ public class User {
 
     public void Cadastro(){
         System.out.println("\n--------------- CADASTRO -----------------");
+        		sc.nextLine();
                 System.out.print("Informe o nome do usuário:");
                 String nome = sc.nextLine();
                             
