@@ -68,11 +68,13 @@ public class User {
     public void verificaTipoUsuario(User user) throws SQLException {
         if (user instanceof Adm) {
             Adm adm = (Adm) user;  // Cast the user to Adm
-            adm.admLogin();
+            if(!adm.admLogin()) {
+            	return;
+            }
             int c0;
             do {
                 c0 = adm.MenuAdm();
-            } while (c0 != 7);  
+            } while (c0 != 8);  
         } else if(user instanceof Candidato) {
             MenuUser();
         } else {

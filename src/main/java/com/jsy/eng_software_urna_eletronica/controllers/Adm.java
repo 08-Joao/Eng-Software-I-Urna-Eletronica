@@ -5,15 +5,13 @@ import java.sql.SQLException;
 public class Adm extends User {
 
     Voting vt = new Voting();
-    private String nomeDeUsuario;
-    private String senha;
+    private String nomeDeUsuario = "admin";
+    private String senha = "admin";
 
     public Adm(){}
 
     public Adm(Integer id, String nome, String nomeDeUsuario, String senha) {
         super(id, nome);
-        this.nomeDeUsuario = nomeDeUsuario;
-        this.senha = senha;
     }
 
     // Getters e Setters
@@ -33,18 +31,19 @@ public class Adm extends User {
         this.senha = senha;
     }
 
-    public void verificaUsuarioSenha(String usuario, String password){
-        if (nomeDeUsuario == null || !nomeDeUsuario.equals(usuario)) {
+    public Boolean verificaUsuarioSenha(String usuario, String password){
+        if (nomeDeUsuario == null || !nomeDeUsuario.equalsIgnoreCase(usuario)) {
             System.out.println("Nome de usuário inválido");
-            return;
+            return false;
         }
 
-        if (senha == null || !senha.equals(password)) {
+        if (senha == null || !senha.equalsIgnoreCase(password)) {
             System.out.println("Senha inválida");
-            return;
+            return false;
         }
 
         System.out.println("Login realizado com sucesso!");
+        return true;
     }
 
     public int MenuAdm() throws SQLException{
@@ -98,12 +97,12 @@ public class Adm extends User {
         return c0;
     }
 
-    public void admLogin(){
+    public Boolean admLogin(){
         System.out.print("------------------ MENU ------------------ ");
         System.out.print("\nInforme o nome de usuário: ");
         String userName = sc.nextLine();
         System.out.print("\nInforme a senha : ");
         String userPassword = sc.nextLine();
-        verificaUsuarioSenha(userName, userPassword);
+        return verificaUsuarioSenha(userName, userPassword);
     }
 }
