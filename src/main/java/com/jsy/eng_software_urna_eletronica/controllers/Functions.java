@@ -12,7 +12,7 @@ public class Functions {
         List<String> votacoes = Database.listVotesTables();
         System.out.println("Lista de votações no histórico: ");
         
-        for(int i = 1; i <= votacoes.size()-1; i++) {
+        for(int i = 0; i <= votacoes.size()-1; i++) {
             System.out.println(i + ". " + votacoes.get(i));
         }
         System.out.println("------------------------------------------------");

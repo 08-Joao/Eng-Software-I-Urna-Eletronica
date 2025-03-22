@@ -22,7 +22,7 @@ public class Voting {
 		List<String> tableNames = Database.listVotesTables();
 		Database.initializeVoting(tableNames.size());		
 		
-		}
+	}
 	
 	public static void makeVote(Integer id) throws SQLException {
 		if(Database.getCandidato(id) != null) {
@@ -35,22 +35,20 @@ public class Voting {
 		List<Candidato> entradas = Database.listVotacao(votingTable);
 		
 		for(Candidato candidato : entradas) {
-			candidato.toString();
+			System.out.println(candidato.toString());			
 		}
 	
 		System.out.println("\n------------------ ELEGIDOS ------------------");
 		List<Candidato> elegidos = Database.getElected(votingTable);
 		
 		for(Candidato elegido : elegidos) {
-			if(elegido.getCargo().compareToIgnoreCase("CIVIL") == 0) {				
-				System.out.println(elegido.toString());
-			}
+			System.out.println(elegido.toString());
 		}
 	}
 
 	public void Votacao() throws SQLException{
         int vChoice;
-        Voting.startVoting(); 
+//        Voting.startVoting(); 
     		    do {
     		        System.out.println("\n------------ VOTAÇÃO ------------");
     		        System.out.println("1. Votar");

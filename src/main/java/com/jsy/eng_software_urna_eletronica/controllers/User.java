@@ -44,7 +44,7 @@ public class User {
         System.out.println("Nome: " + nome);
     }
 
-    public void MenuUser(){
+    public void MenuUser() throws SQLException{
 
         int c0 = -1;
 
@@ -55,8 +55,9 @@ public class User {
         c0 = sc.nextInt();
     		switch(c0) {
     		    case 1:
-    			    Cadastro();
-					    break;
+    			    Voting voting = new Voting();
+    			    voting.Votacao();
+    		    	break;
     		    case 2:
                     System.out.println("Operação encerrada com exito!");
     			    return;
@@ -173,7 +174,7 @@ public class User {
                 String eCargo = foundUser.getCargo();
                 do {
                     System.out.println("\n..........Editando..........");
-                    System.out.print("1. Nome     3. Partido\n2. Cargo    4. Finalizar");
+                    System.out.print("1. Nome     3. Cargo\n2. Partido    4. Finalizar");
                     System.out.println("\n............................");
                     System.out.print("Informe o que deseja editar: ");
                     eChoice = sc.nextInt();

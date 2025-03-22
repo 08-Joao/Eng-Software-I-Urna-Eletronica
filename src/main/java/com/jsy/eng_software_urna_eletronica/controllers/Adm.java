@@ -73,6 +73,7 @@ public class Adm extends User {
                     Editar();
                     break;
                 case 4:
+                	Voting.startVoting();
                     vt.Votacao();
                     break;
                 case 5:

@@ -93,29 +93,29 @@ public class Database {
     public static List<String> listVotesTables() throws SQLException {
         List<String> tableNames = new ArrayList<>();
         String searchTableSQL = """
-        	    SELECT table_name
-        	    FROM information_schema.tables
-        	    WHERE table_name LIKE 'voting_%'
-        	      AND table_type = 'BASE TABLE'
-        	    ORDER BY CAST(regexp_replace(table_name, '[^0-9]', '', 'g') AS INTEGER) ASC;
-        	""";
-
+                SELECT table_name
+                FROM information_schema.tables
+                WHERE table_name LIKE 'voting\\_%'
+                AND table_type = 'BASE TABLE'
+                ORDER BY table_name;
+                """;
 
         try (Connection con = getConnection();
              Statement stmt = con.createStatement();
              ResultSet rs = stmt.executeQuery(searchTableSQL)) {
 
             while (rs.next()) {
-                tableNames.add(rs.getString("table_name"));
+            	String name = rs.getString("table_name");
+                tableNames.add(name);
             }
 
         } catch (SQLException e) {
             System.out.println("Erro ao listar tabelas de votos: " + e.getMessage());
-            throw e; 
+            throw e;
         }
 
         return tableNames;
-    }   
+    }
     
     public static void seedDatabase(Integer quantity) throws SQLException {
         if (quantity == null || quantity <= 0) {
@@ -428,78 +428,104 @@ public class Database {
         }
     }
 
-    public static List<Candidato>listVotacao(String votingTable) throws SQLException{        		
+
+    
+    public static List<Candidato> listVotacao(String votingTable) throws SQLException {        		
         String selectSQL = String.format("""
-                  SELECT id_candidate, quantity
-        FROM %s ;
+                SELECT v.id_candidate, v.quantity, u.nome, u.partido, u.cargo
+                FROM %s v
+                JOIN users u ON v.id_candidate = u.id;
             """, votingTable);
         
+        List<Candidato> candidatos = new ArrayList<>();
+        
         try (Connection con = getConnection();
-                PreparedStatement pstmt = con.prepareStatement(selectSQL)) {
-        	
-    	   List<Integer> entradas = new ArrayList<>();
-        	try (ResultSet rs = pstmt.executeQuery()){
+             PreparedStatement pstmt = con.prepareStatement(selectSQL)) {
+            
+            try (ResultSet rs = pstmt.executeQuery()){
                 while (rs.next()) {
                     Integer id_candidate = rs.getInt("id_candidate");
                     Integer quantity = rs.getInt("quantity");
-
-                    entradas.add(id_candidate);
+                    String nome = rs.getString("nome");
+                    String partido = rs.getString("partido");
+                    String cargo = rs.getString("cargo");
+                    
+                    Candidato candidato = new Candidato(id_candidate, nome, partido, cargo);
+                    candidato.setQuantity(quantity);  // Assuming there's a setQuantity method in Candidato class
+                    
+                    candidatos.add(candidato);
                 }
                 
-                return getMultiplesUsers(entradas);
-        	}
-        	
-        }catch(SQLException e) {
+                return candidatos;
+            }
+        } catch(SQLException e) {
             System.err.println("Erro ao pegar as entradas da votação: " + e.getMessage());
             throw e; 
         }    		
     }
     
+    
     public static List<Candidato> getElected(String votingTable) throws SQLException {
         List<Candidato> electedCandidates = new ArrayList<>();
-
-        // Consulta SQL para obter os candidatos com o maior número de votos por cargo
-        String selectSQL = String.format("""
-            SELECT id_candidate, cargo, MAX(quantity) AS max_quantity
-            FROM %s
-            GROUP BY cargo, id_candidate
-            ORDER BY cargo, max_quantity DESC;
-        """, votingTable);
-
+        
+        // First, get the positions (cargos) available in the voting table
+        String cargosSQL = String.format(
+            "SELECT DISTINCT cargo FROM %s;", 
+            votingTable
+        );
+        
         try (Connection con = getConnection();
-             PreparedStatement pstmt = con.prepareStatement(selectSQL)) {
-
-            ResultSet rs = pstmt.executeQuery();
-
-            // Para cada cargo, buscamos o candidato com maior número de votos
-            while (rs.next()) {
-                Integer idCandidate = rs.getInt("id_candidate");
-                String cargo = rs.getString("cargo");
-                Integer maxVotes = rs.getInt("max_quantity");
-
-                // Consulta para obter os dados do candidato (nome, partido, cargo)
-                String selectCandidateSQL = """
-                    SELECT id, nome, partido, cargo
-                    FROM users
-                    WHERE id = ?;
-                """;
-
-                try (PreparedStatement candidateStmt = con.prepareStatement(selectCandidateSQL)) {
-                    candidateStmt.setInt(1, idCandidate);
-                    ResultSet candidateRs = candidateStmt.executeQuery();
-
-                    if (candidateRs.next()) {
-                        Candidato candidate = new Candidato(
-                            candidateRs.getInt("id"),
-                            candidateRs.getString("nome"),
-                            candidateRs.getString("partido"),
-                            candidateRs.getString("cargo")
-                        );
+             PreparedStatement cargoStmt = con.prepareStatement(cargosSQL)) {
+            
+            ResultSet cargoRs = cargoStmt.executeQuery();
+            
+            // For each position (cargo)
+            while (cargoRs.next()) {
+                String cargo = cargoRs.getString("cargo");
+                
+                // SQL to get the candidate with highest votes for this position
+                String selectSQL = String.format(
+                    "SELECT id_candidate, SUM(quantity) AS total_votes " +
+                    "FROM %s " +
+                    "WHERE cargo = ? " +
+                    "GROUP BY id_candidate " +
+                    "ORDER BY total_votes DESC " +
+                    "LIMIT 1;", 
+                    votingTable
+                );
+                
+                try (PreparedStatement pstmt = con.prepareStatement(selectSQL)) {
+                    pstmt.setString(1, cargo);
+                    ResultSet rs = pstmt.executeQuery();
+                    
+                    if (rs.next()) {
+                        Integer idCandidate = rs.getInt("id_candidate");
+                        Integer totalVotes = rs.getInt("total_votes");
                         
-                        // Aqui, incluímos a quantidade de votos no objeto User
-                        candidate.setQuantity(maxVotes);
-
-                        electedCandidates.add(candidate);
+                        // Query to get candidate data
+                        String selectCandidateSQL = 
+                            "SELECT id, nome, partido, cargo " +
+                            "FROM users " +
+                            "WHERE id = ?;";
+                        
+                        try (PreparedStatement candidateStmt = con.prepareStatement(selectCandidateSQL)) {
+                            candidateStmt.setInt(1, idCandidate);
+                            ResultSet candidateRs = candidateStmt.executeQuery();
+                            
+                            if (candidateRs.next()) {
+                                Candidato candidate = new Candidato(
+                                    candidateRs.getInt("id"),
+                                    candidateRs.getString("nome"),
+                                    candidateRs.getString("partido"),
+                                    candidateRs.getString("cargo")
+                                );
+                                
+                                // Set votes to the candidate
+                                candidate.setQuantity(totalVotes);
+                                
+                                electedCandidates.add(candidate);
+                            }
+                        }
                     }
                 }
             }
@@ -507,7 +533,9 @@ public class Database {
             System.err.println("Erro ao buscar os candidatos mais votados: " + e.getMessage());
             throw e;
         }
-
+        
         return electedCandidates;
     }
+    
+    
 }
